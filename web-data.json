@@ -1,7 +1,7 @@
 {
   "botName": "Farmers Life",
   "botOnline": true,
-  "updatedAt": "2026-11-27T12:09:40.285Z",
+  "updatedAt": "2026-11-27T12:14:57.829Z",
   "economy": {
     "dailyMissionGold": 3,
     "achievementGold": 5,
@@ -20,10 +20,10 @@
     },
     {
       "name": "Rangga Eka Zunisstar",
-      "level": 2805,
+      "level": 2808,
       "townLevel": 1,
-      "prestigeStars": 10,
-      "coins": 10847,
+      "prestigeStars": 11,
+      "coins": 596,
       "gold": 70
     },
     {
