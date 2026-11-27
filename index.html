@@ -13,6 +13,7 @@
       --muted: #9bb5a5;
       --accent: #38c172;
       --gold: #f5b942;
+      --danger: #f06464;
       --border: #254032;
     }
     * { box-sizing: border-box; }
@@ -38,6 +39,11 @@
       border: 1px solid rgba(56, 193, 114, 0.35);
       padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
     }
+    .badge.expired {
+      background: rgba(240, 100, 100, 0.16);
+      color: #ff9d9d;
+      border-color: rgba(240, 100, 100, 0.35);
+    }
     h1, h2, h3 { margin: 0 0 8px; }
     p { margin: 0 0 8px; color: var(--muted); font-size: 14px; }
     .stats {
@@ -51,12 +57,13 @@
     .stat strong { display: block; font-size: 16px; color: var(--text); margin-top: 2px; }
     .seeds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0; }
     @media (min-width: 520px) { .seeds { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-    button, input, textarea {
+    button {
       font-family: inherit; border-radius: 10px; border: 1px solid var(--border);
       background: var(--card-2); color: var(--text); padding: 9px 12px; font-size: 13px;
+      cursor: pointer; font-weight: 600; transition: 0.15s ease;
     }
-    button { cursor: pointer; font-weight: 600; transition: 0.15s ease; }
-    button:hover { border-color: var(--accent); }
+    button:hover:not(:disabled) { border-color: var(--accent); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
     button.primary { background: var(--accent); color: #062011; border-color: var(--accent); }
     button.gold { background: rgba(245, 185, 66, 0.18); color: #ffd470; border-color: rgba(245, 185, 66, 0.45); }
     .seed-btn.active { border-color: var(--accent); outline: 2px solid rgba(56, 193, 114, 0.35); }
@@ -69,14 +76,12 @@
     .plot.ready { border-color: var(--gold); background: rgba(245, 185, 66, 0.08); }
     .plot-title { font-weight: 700; font-size: 14px; }
     .plot-sub { font-size: 12px; color: var(--muted); }
-    input[type="text"] { width: 100%; font-family: monospace; font-size: 12px; margin-top: 8px; }
     pre {
       background: #09100c; border: 1px solid var(--border); border-radius: 10px;
       padding: 12px; overflow-x: auto; font-size: 12px; color: #cde7d7; margin: 8px 0 0;
     }
     .log { font-size: 13px; color: #9ef0be; min-height: 20px; margin-top: 8px; }
-    .cmd-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .cmd { background: var(--card-2); border: 1px solid var(--border); padding: 4px 8px; border-radius: 8px; font-size: 12px; color: var(--muted); }
+    .warn { color: #ff9d9d; }
   </style>
 </head>
 <body>
@@ -84,7 +89,7 @@
     <div class="card">
       <div class="row">
         <span class="badge" id="botStatusBadge">● Memuat Status Bot...</span>
-        <span style="font-size:12px;color:var(--muted)" id="syncTime">Sync: -</span>
+        <span class="badge" id="sessionBadge">⏳ Sesi 5 Hari: Mengecek...</span>
       </div>
       <h1 style="margin-top:10px">🌾 Farmers Life</h1>
       <p id="playerSubtitle">Khristopher Evan (Petani Desa) • Lv.54 • Pelabuhan Surya • ☀️ Panen Raya</p>
@@ -92,7 +97,7 @@
 
       <div class="stats">
         <div class="stat">Coins / Gold<strong id="statMoney">1157c • 0g</strong></div>
-        <div class="stat">Level & XP<strong id="statLevel">Lv. 54</strong></div>
+        <div class="stat">Level<strong id="statLevel">Lv. 54</strong></div>
         <div class="stat">Energi<strong id="statEnergy">30/30 ⚡</strong></div>
         <div class="stat">Gudang / Panen<strong id="statBag">12/40 📦</strong></div>
       </div>
@@ -100,37 +105,17 @@
 
     <div class="card">
       <div class="row">
-        <h2>🌱 Kebun Web (Nanem & Panen)</h2>
+        <h2>🌱 Kebun Web (Auto-Save)</h2>
         <div class="row">
-          <button class="gold" onclick="claimDailyMission()">Misi Harian (+3g)</button>
-          <button class="gold" onclick="refillEnergy()">Isi ⚡ (+15c)</button>
+          <button class="gold" id="btnMission" onclick="claimDailyMission()">Misi Harian (+3g)</button>
+          <button class="gold" id="btnEnergy" onclick="refillEnergy()">Isi ⚡ (+15c)</button>
         </div>
       </div>
-      <p>Pilih bibit (1–4), klik petak kosong untuk <b>nanem</b>, lalu klik petak siap panen untuk <b>panen</b>.</p>
+      <p id="sessionHint">Sesi sambung aktif selama 5 hari sejak kamu mengetik <b>sambung</b> di WA. Setelah 5 hari, sesi putus otomatis.</p>
 
       <div class="seeds" id="seedButtons"></div>
       <div class="plots" id="plotsGrid"></div>
-      <div class="log" id="actionLog">Siap nanem di kebun web!</div>
-    </div>
-
-    <div class="card">
-      <h2>🔗 Sambung Cepat Web ↔ WA</h2>
-      <p>Klik <b>Buat & Salin Link</b>, lalu kirim ke WA dengan format: <code>sambung &lt;link_atau_kode&gt;</code>.</p>
-      <div class="row" style="margin-top:8px">
-        <button class="primary" onclick="copyConnectLink()">Buat & Salin Link</button>
-        <button onclick="applyInputConnect()">Muat dari Kolom</button>
-        <button onclick="resetDemo()">Reset Awal</button>
-      </div>
-      <input type="text" id="connectBox" placeholder="Link sambung otomatis muncul di sini, atau tempel link/kode dari WA..." />
-
-      <div class="cmd-list">
-        <span class="cmd">sambung &lt;link/kode&gt;</span>
-        <span class="cmd">kodesave</span>
-        <span class="cmd">kebun</span>
-        <span class="cmd">bibit 1..4</span>
-        <span class="cmd">tanam</span>
-        <span class="cmd">panen</span>
-      </div>
+      <div class="log" id="actionLog">Auto-save aktif! Siap nanem di kebun web.</div>
     </div>
 
     <div class="card">
@@ -140,7 +125,8 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "farmers_life_web_save_v1";
+    const STORAGE_KEY = "farmers_life_web_session_v2";
+    const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
     const SEEDS = [
       { id: 1, name: "Bibit 1 (Padi)", cost: 25, reward: 55, growSec: 8 },
       { id: 2, name: "Bibit 2 (Jagung)", cost: 50, reward: 115, growSec: 14 },
@@ -152,7 +138,10 @@
     let state = loadState();
 
     function defaultState() {
+      const now = Date.now();
       return {
+        sessionId: "local-init",
+        expiresAt: now + FIVE_DAYS_MS,
         name: "Khristopher Evan",
         title: "Petani Desa",
         city: "Pelabuhan Surya",
@@ -169,23 +158,24 @@
       };
     }
 
-    function encodePayload(obj) {
-      const jsonStr = JSON.stringify(obj);
-      return btoa(unescape(encodeURIComponent(jsonStr)));
+    function isSessionExpired() {
+      return !state.expiresAt || Date.now() >= Number(state.expiresAt);
     }
 
-    function decodePayload(raw) {
+    function decodeHashSession() {
+      const hash = window.location.hash || "";
+      if (!hash.startsWith("#save=")) return null;
+      const raw = hash.slice(6).replace(/^FLSAVE1:/i, "").trim();
       if (!raw) return null;
-      let cleaned = String(raw).trim();
-      const hashIdx = cleaned.indexOf("#save=");
-      if (hashIdx !== -1) cleaned = cleaned.slice(hashIdx + 6);
-      cleaned = cleaned.replace(/^FLSAVE1:/i, "").trim();
-      const jsonStr = decodeURIComponent(escape(atob(cleaned)));
+      const jsonStr = decodeURIComponent(escape(atob(raw)));
       const parsed = JSON.parse(jsonStr);
       if (!parsed || typeof parsed !== "object") return null;
+      const now = Date.now();
       return {
         ...defaultState(),
         ...parsed,
+        sessionId: parsed.sessionId || ("sess-" + now),
+        expiresAt: Number(parsed.expiresAt) || (now + FIVE_DAYS_MS),
         coins: Math.max(0, Number(parsed.coins) || 0),
         gold: Math.max(0, Number(parsed.gold) || 0),
         level: Math.max(1, Number(parsed.level) || 1),
@@ -194,25 +184,12 @@
       };
     }
 
-    function buildConnectUrl() {
-      const baseUrl = window.location.origin + window.location.pathname;
-      return `${baseUrl}#save=${encodePayload(state)}`;
-    }
-
-    function syncConnectBox() {
-      const box = document.getElementById("connectBox");
-      if (box) box.value = buildConnectUrl();
-    }
-
     function loadState() {
       try {
-        const hash = window.location.hash || "";
-        if (hash.startsWith("#save=")) {
-          const fromHash = decodePayload(hash);
-          if (fromHash) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(fromHash));
-            return fromHash;
-          }
+        const fromHash = decodeHashSession();
+        if (fromHash) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(fromHash));
+          return fromHash;
         }
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return defaultState();
@@ -222,13 +199,16 @@
       }
     }
 
-    function saveState() {
+    function autoSave() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      syncConnectBox();
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+      history.replaceState(null, "", "#save=" + encoded);
     }
 
-    function setLog(msg) {
-      document.getElementById("actionLog").textContent = msg;
+    function setLog(msg, isWarn = false) {
+      const el = document.getElementById("actionLog");
+      el.textContent = msg;
+      el.className = isWarn ? "log warn" : "log";
     }
 
     function selectSeed(id) {
@@ -237,15 +217,22 @@
     }
 
     function renderSeeds() {
+      const expired = isSessionExpired();
       const box = document.getElementById("seedButtons");
       box.innerHTML = SEEDS.map(s => `
-        <button class="seed-btn ${s.id === selectedSeedId ? "active" : ""}" onclick="selectSeed(${s.id})">
+        <button class="seed-btn ${s.id === selectedSeedId ? "active" : ""}" ${expired ? "disabled" : ""} onclick="selectSeed(${s.id})">
           ${s.name}<br><span style="font-size:11px;color:var(--muted)">Beli ${s.cost}c • Panen +${s.reward}c (${s.growSec}s)</span>
         </button>
       `).join("");
     }
 
     function interactPlot(index) {
+      if (isSessionExpired()) {
+        setLog("🔌 Sesi 5 hari sudah berakhir! Ketik 'sambung' di WA untuk menyambungkan ulang.", true);
+        renderAll();
+        return;
+      }
+
       const plot = state.plots[index];
       const now = Date.now();
 
@@ -269,15 +256,15 @@
           plantedAt: now,
           readyAt: now + seed.growSec * 1000
         };
-        saveState();
-        setLog(`🌱 Menanam ${seed.name} di petak #${index + 1} (-${discountedCost}c, -2⚡).`);
+        autoSave();
+        setLog(`🌱 Nanem ${seed.name} di petak #${index + 1} (-${discountedCost}c, -2⚡) • Auto-saved.`);
         renderAll();
         return;
       }
 
       if (now >= plot.crop.readyAt) {
         if (state.bagUsed >= state.bagMax) {
-          setLog("📦 Gudang penuh! Kosongkan dulu atau reset.");
+          setLog("📦 Gudang penuh!");
           return;
         }
         const isDouble = Math.random() < 0.35;
@@ -286,8 +273,8 @@
         state.bagUsed = Math.min(state.bagMax, state.bagUsed + 1);
         const harvestedName = plot.crop.name;
         plot.crop = null;
-        saveState();
-        setLog(`🌾 Panen ${harvestedName} di petak #${index + 1}: +${gainedCoins}c${isDouble ? " (PANEN GANDA!)" : ""}!`);
+        autoSave();
+        setLog(`🌾 Panen ${harvestedName} di petak #${index + 1}: +${gainedCoins}c${isDouble ? " (PANEN GANDA!)" : ""} • Auto-saved.`);
         renderAll();
       } else {
         const sisa = Math.ceil((plot.crop.readyAt - now) / 1000);
@@ -296,6 +283,10 @@
     }
 
     function claimDailyMission() {
+      if (isSessionExpired()) {
+        setLog("🔌 Sesi 5 hari sudah berakhir! Ketik 'sambung' di WA untuk menyambungkan ulang.", true);
+        return;
+      }
       const today = new Date().toISOString().slice(0, 10);
       if (state.lastMissionDay === today) {
         setLog("✅ Misi harian hari ini sudah diklaim (+3g).");
@@ -303,12 +294,16 @@
       }
       state.lastMissionDay = today;
       state.gold += 3;
-      saveState();
-      setLog("🎯 Misi harian selesai! Dapat +3g.");
+      autoSave();
+      setLog("🎯 Misi harian selesai! +3g • Auto-saved.");
       renderAll();
     }
 
     function refillEnergy() {
+      if (isSessionExpired()) {
+        setLog("🔌 Sesi 5 hari sudah berakhir! Ketik 'sambung' di WA untuk menyambungkan ulang.", true);
+        return;
+      }
       if (state.energy >= state.maxEnergy) {
         setLog("⚡ Energi sudah penuh.");
         return;
@@ -319,52 +314,41 @@
       }
       state.coins -= 15;
       state.energy = Math.min(state.maxEnergy, state.energy + 10);
-      saveState();
-      setLog("⚡ Energi bertambah +10 (-15c).");
+      autoSave();
+      setLog("⚡ Energi +10 (-15c) • Auto-saved.");
       renderAll();
     }
 
-    async function copyConnectLink() {
-      const url = buildConnectUrl();
-      document.getElementById("connectBox").value = url;
-      try {
-        await navigator.clipboard.writeText(url);
-        setLog("🔗 Link sambung disalin! Kirim ke WA dengan ketik: sambung <link>");
-      } catch {
-        setLog("🔗 Link sambung siap di kolom bawah! Salin lalu ketik di WA: sambung <link>");
-      }
-    }
+    function renderSessionBadge() {
+      const badge = document.getElementById("sessionBadge");
+      const btnMission = document.getElementById("btnMission");
+      const btnEnergy = document.getElementById("btnEnergy");
 
-    function applyInputConnect() {
-      const val = document.getElementById("connectBox").value.trim();
-      try {
-        const next = decodePayload(val);
-        if (!next) throw new Error("Kosong");
-        state = next;
-        saveState();
-        setLog("✅ Data tersambung dan dimuat ke kebun web!");
-        renderAll();
-      } catch {
-        setLog("❌ Link atau kode tidak valid.");
+      if (isSessionExpired()) {
+        badge.textContent = "🔌 Sesi Putus (Lewat 5 Hari)";
+        badge.className = "badge expired";
+        btnMission.disabled = true;
+        btnEnergy.disabled = true;
+      } else {
+        const sisaMs = Number(state.expiresAt) - Date.now();
+        const sisaHari = (sisaMs / (24 * 60 * 60 * 1000)).toFixed(1);
+        badge.textContent = `🔗 Tersambung (${sisaHari} hari tersisa)`;
+        badge.className = "badge";
+        btnMission.disabled = false;
+        btnEnergy.disabled = false;
       }
-    }
-
-    function resetDemo() {
-      state = defaultState();
-      saveState();
-      setLog("🔄 Data kebun web direset ke kondisi awal.");
-      renderAll();
     }
 
     function renderPlots() {
       const grid = document.getElementById("plotsGrid");
       const now = Date.now();
+      const expired = isSessionExpired();
       grid.innerHTML = state.plots.map((p, idx) => {
         if (!p.crop) {
           return `
             <div class="plot" onclick="interactPlot(${idx})">
               <div class="plot-title">Petak #${idx + 1}</div>
-              <div class="plot-sub">Kosong • Klik untuk nanem</div>
+              <div class="plot-sub">${expired ? "Sesi terputus" : "Kosong • Klik untuk nanem"}</div>
             </div>
           `;
         }
@@ -386,7 +370,7 @@
       document.getElementById("statLevel").textContent = `Lv. ${state.level}`;
       document.getElementById("statEnergy").textContent = `${state.energy}/${state.maxEnergy} ⚡`;
       document.getElementById("statBag").textContent = `${state.bagUsed}/${state.bagMax} 📦`;
-      syncConnectBox();
+      renderSessionBadge();
     }
 
     function renderAll() {
@@ -402,9 +386,6 @@
         document.getElementById("jsonView").textContent = JSON.stringify(data, null, 2);
         const badge = document.getElementById("botStatusBadge");
         badge.textContent = data.botOnline ? "● Bot Aktif" : "○ Bot Offline";
-        if (data.updatedAt) {
-          document.getElementById("syncTime").textContent = "Update: " + data.updatedAt;
-        }
       } catch (err) {
         document.getElementById("jsonView").textContent = "Gagal memuat web-data.json: " + err.message;
       }
