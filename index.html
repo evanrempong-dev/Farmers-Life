@@ -51,7 +51,7 @@
     .stat strong { display: block; font-size: 16px; color: var(--text); margin-top: 2px; }
     .seeds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0; }
     @media (min-width: 520px) { .seeds { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-    button, select, textarea {
+    button, input, textarea {
       font-family: inherit; border-radius: 10px; border: 1px solid var(--border);
       background: var(--card-2); color: var(--text); padding: 9px 12px; font-size: 13px;
     }
@@ -69,7 +69,7 @@
     .plot.ready { border-color: var(--gold); background: rgba(245, 185, 66, 0.08); }
     .plot-title { font-weight: 700; font-size: 14px; }
     .plot-sub { font-size: 12px; color: var(--muted); }
-    textarea { width: 100%; min-height: 76px; font-family: monospace; font-size: 12px; margin-top: 8px; }
+    input[type="text"] { width: 100%; font-family: monospace; font-size: 12px; margin-top: 8px; }
     pre {
       background: #09100c; border: 1px solid var(--border); border-radius: 10px;
       padding: 12px; overflow-x: auto; font-size: 12px; color: #cde7d7; margin: 8px 0 0;
@@ -114,26 +114,22 @@
     </div>
 
     <div class="card">
-      <h2>🔄 Sinkronisasi Progres Web ↔ WA</h2>
-      <p>Gunakan <b>Kode Save</b> untuk memindahkan progres antara Web dan bot WhatsApp.</p>
+      <h2>🔗 Sambung Cepat Web ↔ WA</h2>
+      <p>Klik <b>Buat & Salin Link</b>, lalu kirim ke WA dengan format: <code>sambung &lt;link_atau_kode&gt;</code>.</p>
       <div class="row" style="margin-top:8px">
-        <button class="primary" onclick="exportSaveCode()">Ekspor Kode Save</button>
-        <button onclick="importSaveCode()">Impor Kode Save</button>
+        <button class="primary" onclick="copyConnectLink()">Buat & Salin Link</button>
+        <button onclick="applyInputConnect()">Muat dari Kolom</button>
         <button onclick="resetDemo()">Reset Awal</button>
       </div>
-      <textarea id="saveBox" placeholder="Kode save akan muncul di sini saat diekspor, atau tempel kode save dari WA lalu klik Impor Kode Save..."></textarea>
+      <input type="text" id="connectBox" placeholder="Link sambung otomatis muncul di sini, atau tempel link/kode dari WA..." />
 
       <div class="cmd-list">
+        <span class="cmd">sambung &lt;link/kode&gt;</span>
+        <span class="cmd">kodesave</span>
         <span class="cmd">kebun</span>
         <span class="cmd">bibit 1..4</span>
         <span class="cmd">tanam</span>
         <span class="cmd">panen</span>
-        <span class="cmd">pabrik</span>
-        <span class="cmd">bank</span>
-        <span class="cmd">ternak</span>
-        <span class="cmd">pet</span>
-        <span class="cmd">mancingpagi</span>
-        <span class="cmd">tambangpagi</span>
       </div>
     </div>
 
@@ -173,8 +169,51 @@
       };
     }
 
+    function encodePayload(obj) {
+      const jsonStr = JSON.stringify(obj);
+      return btoa(unescape(encodeURIComponent(jsonStr)));
+    }
+
+    function decodePayload(raw) {
+      if (!raw) return null;
+      let cleaned = String(raw).trim();
+      const hashIdx = cleaned.indexOf("#save=");
+      if (hashIdx !== -1) cleaned = cleaned.slice(hashIdx + 6);
+      cleaned = cleaned.replace(/^FLSAVE1:/i, "").trim();
+      const jsonStr = decodeURIComponent(escape(atob(cleaned)));
+      const parsed = JSON.parse(jsonStr);
+      if (!parsed || typeof parsed !== "object") return null;
+      return {
+        ...defaultState(),
+        ...parsed,
+        coins: Math.max(0, Number(parsed.coins) || 0),
+        gold: Math.max(0, Number(parsed.gold) || 0),
+        level: Math.max(1, Number(parsed.level) || 1),
+        energy: Math.max(0, Math.min(Number(parsed.maxEnergy) || 30, Number(parsed.energy) || 0)),
+        plots: Array.isArray(parsed.plots) && parsed.plots.length === 6 ? parsed.plots : defaultState().plots
+      };
+    }
+
+    function buildConnectUrl() {
+      const baseUrl = window.location.origin + window.location.pathname;
+      return `${baseUrl}#save=${encodePayload(state)}`;
+    }
+
+    function syncConnectBox() {
+      const box = document.getElementById("connectBox");
+      if (box) box.value = buildConnectUrl();
+    }
+
     function loadState() {
       try {
+        const hash = window.location.hash || "";
+        if (hash.startsWith("#save=")) {
+          const fromHash = decodePayload(hash);
+          if (fromHash) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(fromHash));
+            return fromHash;
+          }
+        }
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return defaultState();
         return { ...defaultState(), ...JSON.parse(raw) };
@@ -185,6 +224,7 @@
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      syncConnectBox();
     }
 
     function setLog(msg) {
@@ -211,7 +251,7 @@
 
       if (!plot.crop) {
         const seed = SEEDS.find(s => s.id === selectedSeedId) || SEEDS[0];
-        const discountedCost = Math.max(1, Math.round(seed.cost * 0.88)); // Hari Hemat Toko -12%
+        const discountedCost = Math.max(1, Math.round(seed.cost * 0.88));
         if (state.energy < 2) {
           setLog("⚡ Energi kurang dari 2! Isi energi dulu atau tunggu.");
           return;
@@ -237,10 +277,9 @@
 
       if (now >= plot.crop.readyAt) {
         if (state.bagUsed >= state.bagMax) {
-          setLog("📦 Gudang penuh! Kosongkan dulu atau ekspor/reset.");
+          setLog("📦 Gudang penuh! Kosongkan dulu atau reset.");
           return;
         }
-        // Peluang panen ganda saat Panen Raya
         const isDouble = Math.random() < 0.35;
         const gainedCoins = isDouble ? plot.crop.reward * 2 : plot.crop.reward;
         state.coins += gainedCoins;
@@ -285,37 +324,28 @@
       renderAll();
     }
 
-    function exportSaveCode() {
-      const jsonStr = JSON.stringify(state);
-      const code = btoa(unescape(encodeURIComponent(jsonStr)));
-      document.getElementById("saveBox").value = code;
-      setLog("📤 Kode save berhasil dibuat! Salin dan kirim ke bot WA untuk sinkronisasi.");
+    async function copyConnectLink() {
+      const url = buildConnectUrl();
+      document.getElementById("connectBox").value = url;
+      try {
+        await navigator.clipboard.writeText(url);
+        setLog("🔗 Link sambung disalin! Kirim ke WA dengan ketik: sambung <link>");
+      } catch {
+        setLog("🔗 Link sambung siap di kolom bawah! Salin lalu ketik di WA: sambung <link>");
+      }
     }
 
-    function importSaveCode() {
-      const rawCode = document.getElementById("saveBox").value.trim();
-      if (!rawCode) {
-        setLog("⚠️ Tempelkan kode save terlebih dahulu.");
-        return;
-      }
+    function applyInputConnect() {
+      const val = document.getElementById("connectBox").value.trim();
       try {
-        const jsonStr = decodeURIComponent(escape(atob(rawCode)));
-        const parsed = JSON.parse(jsonStr);
-        if (!parsed || typeof parsed !== "object") throw new Error("Format tidak valid");
-        state = {
-          ...defaultState(),
-          ...parsed,
-          coins: Math.max(0, Number(parsed.coins) || 0),
-          gold: Math.max(0, Number(parsed.gold) || 0),
-          level: Math.max(1, Number(parsed.level) || 1),
-          energy: Math.max(0, Math.min(Number(parsed.maxEnergy) || 30, Number(parsed.energy) || 0)),
-          plots: Array.isArray(parsed.plots) && parsed.plots.length === 6 ? parsed.plots : defaultState().plots
-        };
+        const next = decodePayload(val);
+        if (!next) throw new Error("Kosong");
+        state = next;
         saveState();
-        setLog("📥 Kode save berhasil diimpor ke kebun web!");
+        setLog("✅ Data tersambung dan dimuat ke kebun web!");
         renderAll();
       } catch {
-        setLog("❌ Kode save tidak valid atau rusak.");
+        setLog("❌ Link atau kode tidak valid.");
       }
     }
 
@@ -356,6 +386,7 @@
       document.getElementById("statLevel").textContent = `Lv. ${state.level}`;
       document.getElementById("statEnergy").textContent = `${state.energy}/${state.maxEnergy} ⚡`;
       document.getElementById("statBag").textContent = `${state.bagUsed}/${state.bagMax} 📦`;
+      syncConnectBox();
     }
 
     function renderAll() {
@@ -370,11 +401,7 @@
         const data = await res.json();
         document.getElementById("jsonView").textContent = JSON.stringify(data, null, 2);
         const badge = document.getElementById("botStatusBadge");
-        if (data.botOnline) {
-          badge.textContent = "● Bot Aktif";
-        } else {
-          badge.textContent = "○ Bot Offline";
-        }
+        badge.textContent = data.botOnline ? "● Bot Aktif" : "○ Bot Offline";
         if (data.updatedAt) {
           document.getElementById("syncTime").textContent = "Update: " + data.updatedAt;
         }
