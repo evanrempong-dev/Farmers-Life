@@ -1,7 +1,7 @@
 {
   "botName": "Farmers Life",
   "botOnline": true,
-  "updatedAt": "2026-11-27T12:20:00.154Z",
+  "updatedAt": "2026-11-27T12:25:05.063Z",
   "economy": {
     "dailyMissionGold": 3,
     "achievementGold": 5,
@@ -47,7 +47,7 @@
       "level": 54,
       "townLevel": 1,
       "prestigeStars": 0,
-      "coins": 999,
+      "coins": 967,
       "gold": 45
     }
   ]
