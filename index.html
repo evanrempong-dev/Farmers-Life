@@ -3,77 +3,390 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Farmers Life — Board Status</title>
+  <title>Farmers Life — Web & WA</title>
   <style>
+    :root {
+      --bg: #0c1410;
+      --card: #13221a;
+      --card-2: #182b21;
+      --text: #eef7f1;
+      --muted: #9bb5a5;
+      --accent: #38c172;
+      --gold: #f5b942;
+      --border: #254032;
+    }
+    * { box-sizing: border-box; }
     body {
-      font-family: system-ui, sans-serif;
-      background: #141915;
-      color: #f3f5f2;
       margin: 0;
-      padding: 24px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
     }
+    .wrap { max-width: 680px; margin: 0 auto; display: grid; gap: 14px; }
     .card {
-      max-width: 680px;
-      margin: 0 auto;
-      background: #1f2821;
-      border: 1px solid #2f3d32;
-      border-radius: 12px;
-      padding: 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
     }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
     .badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: #24472d;
-      color: #8ef0a7;
-      font-size: 13px;
-      font-weight: 600;
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(56, 193, 114, 0.16);
+      color: #7ef2ad;
+      border: 1px solid rgba(56, 193, 114, 0.35);
+      padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
     }
+    h1, h2, h3 { margin: 0 0 8px; }
+    p { margin: 0 0 8px; color: var(--muted); font-size: 14px; }
+    .stats {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px;
+    }
+    @media (min-width: 520px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    .stat {
+      background: var(--card-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px;
+      font-size: 13px;
+    }
+    .stat strong { display: block; font-size: 16px; color: var(--text); margin-top: 2px; }
+    .seeds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0; }
+    @media (min-width: 520px) { .seeds { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    button, select, textarea {
+      font-family: inherit; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--card-2); color: var(--text); padding: 9px 12px; font-size: 13px;
+    }
+    button { cursor: pointer; font-weight: 600; transition: 0.15s ease; }
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); color: #062011; border-color: var(--accent); }
+    button.gold { background: rgba(245, 185, 66, 0.18); color: #ffd470; border-color: rgba(245, 185, 66, 0.45); }
+    .seed-btn.active { border-color: var(--accent); outline: 2px solid rgba(56, 193, 114, 0.35); }
+    .plots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+    .plot {
+      background: var(--card-2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px; min-height: 106px; display: flex; flex-direction: column; justify-content: space-between;
+      cursor: pointer;
+    }
+    .plot.ready { border-color: var(--gold); background: rgba(245, 185, 66, 0.08); }
+    .plot-title { font-weight: 700; font-size: 14px; }
+    .plot-sub { font-size: 12px; color: var(--muted); }
+    textarea { width: 100%; min-height: 76px; font-family: monospace; font-size: 12px; margin-top: 8px; }
     pre {
-      background: #0f1310;
-      padding: 14px;
-      border-radius: 8px;
-      overflow-x: auto;
-      font-size: 13px;
+      background: #09100c; border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px; overflow-x: auto; font-size: 12px; color: #cde7d7; margin: 8px 0 0;
     }
+    .log { font-size: 13px; color: #9ef0be; min-height: 20px; margin-top: 8px; }
+    .cmd-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .cmd { background: var(--card-2); border: 1px solid var(--border); padding: 4px 8px; border-radius: 8px; font-size: 12px; color: var(--muted); }
   </style>
 </head>
 <body>
-  <div class="card">
-    <span class="badge" id="status-badge">Memuat...</span>
-    <h1>Farmers Life</h1>
-    <p id="updated-text">Menunggu data sinkronisasi...</p>
-    <h3>Ringkasan Ekonomi</h3>
-    <ul id="economy-list"></ul>
-    <h3>Data JSON</h3>
-    <pre id="raw-json">Memuat...</pre>
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <span class="badge" id="botStatusBadge">● Memuat Status Bot...</span>
+        <span style="font-size:12px;color:var(--muted)" id="syncTime">Sync: -</span>
+      </div>
+      <h1 style="margin-top:10px">🌾 Farmers Life</h1>
+      <p id="playerSubtitle">Khristopher Evan (Petani Desa) • Lv.54 • Pelabuhan Surya • ☀️ Panen Raya</p>
+      <p id="marketInfo" style="color:#ffd470">🌦️ Panen ganda & bonus koin naik • 🏷️ Hari Hemat Toko (Jual 0% • Beli -12%)</p>
+
+      <div class="stats">
+        <div class="stat">Coins / Gold<strong id="statMoney">1157c • 0g</strong></div>
+        <div class="stat">Level & XP<strong id="statLevel">Lv. 54</strong></div>
+        <div class="stat">Energi<strong id="statEnergy">30/30 ⚡</strong></div>
+        <div class="stat">Gudang / Panen<strong id="statBag">12/40 📦</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <h2>🌱 Kebun Web (Nanem & Panen)</h2>
+        <div class="row">
+          <button class="gold" onclick="claimDailyMission()">Misi Harian (+3g)</button>
+          <button class="gold" onclick="refillEnergy()">Isi ⚡ (+15c)</button>
+        </div>
+      </div>
+      <p>Pilih bibit (1–4), klik petak kosong untuk <b>nanem</b>, lalu klik petak siap panen untuk <b>panen</b>.</p>
+
+      <div class="seeds" id="seedButtons"></div>
+      <div class="plots" id="plotsGrid"></div>
+      <div class="log" id="actionLog">Siap nanem di kebun web!</div>
+    </div>
+
+    <div class="card">
+      <h2>🔄 Sinkronisasi Progres Web ↔ WA</h2>
+      <p>Gunakan <b>Kode Save</b> untuk memindahkan progres antara Web dan bot WhatsApp.</p>
+      <div class="row" style="margin-top:8px">
+        <button class="primary" onclick="exportSaveCode()">Ekspor Kode Save</button>
+        <button onclick="importSaveCode()">Impor Kode Save</button>
+        <button onclick="resetDemo()">Reset Awal</button>
+      </div>
+      <textarea id="saveBox" placeholder="Kode save akan muncul di sini saat diekspor, atau tempel kode save dari WA lalu klik Impor Kode Save..."></textarea>
+
+      <div class="cmd-list">
+        <span class="cmd">kebun</span>
+        <span class="cmd">bibit 1..4</span>
+        <span class="cmd">tanam</span>
+        <span class="cmd">panen</span>
+        <span class="cmd">pabrik</span>
+        <span class="cmd">bank</span>
+        <span class="cmd">ternak</span>
+        <span class="cmd">pet</span>
+        <span class="cmd">mancingpagi</span>
+        <span class="cmd">tambangpagi</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📡 Snapshot Publik Bot (`web-data.json`)</h3>
+      <pre id="jsonView">Memuat web-data.json...</pre>
+    </div>
   </div>
 
   <script>
-    fetch("./web-data.json?t=" + Date.now())
-      .then((res) => {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
-      })
-      .then((data) => {
-        const badge = document.getElementById("status-badge");
-        badge.textContent = data.botOnline ? "Bot Aktif" : "Bot Offline";
-        document.getElementById("updated-text").textContent =
-          "Update terakhir: " + (data.updatedAt || "-");
+    const STORAGE_KEY = "farmers_life_web_save_v1";
+    const SEEDS = [
+      { id: 1, name: "Bibit 1 (Padi)", cost: 25, reward: 55, growSec: 8 },
+      { id: 2, name: "Bibit 2 (Jagung)", cost: 50, reward: 115, growSec: 14 },
+      { id: 3, name: "Bibit 3 (Tomat)", cost: 90, reward: 210, growSec: 22 },
+      { id: 4, name: "Bibit 4 (Stroberi)", cost: 150, reward: 360, growSec: 32 }
+    ];
 
-        const eco = data.economy || {};
-        document.getElementById("economy-list").innerHTML = `
-          <li>Misi Harian: +${eco.dailyMissionGold ?? 3}${eco.goldSymbol ?? "g"}</li>
-          <li>Pencapaian: +${eco.achievementGold ?? 5}${eco.goldSymbol ?? "g"}</li>
-          <li>Mata Uang: Coins (${eco.currencySymbol ?? "c"}) & Gold (${eco.goldSymbol ?? "g"})</li>
+    let selectedSeedId = 1;
+    let state = loadState();
+
+    function defaultState() {
+      return {
+        name: "Khristopher Evan",
+        title: "Petani Desa",
+        city: "Pelabuhan Surya",
+        season: "☀️ Panen Raya",
+        level: 54,
+        coins: 1157,
+        gold: 0,
+        energy: 30,
+        maxEnergy: 30,
+        bagUsed: 12,
+        bagMax: 40,
+        lastMissionDay: "",
+        plots: Array.from({ length: 6 }, () => ({ crop: null }))
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return defaultState();
+        return { ...defaultState(), ...JSON.parse(raw) };
+      } catch {
+        return defaultState();
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function setLog(msg) {
+      document.getElementById("actionLog").textContent = msg;
+    }
+
+    function selectSeed(id) {
+      selectedSeedId = id;
+      renderSeeds();
+    }
+
+    function renderSeeds() {
+      const box = document.getElementById("seedButtons");
+      box.innerHTML = SEEDS.map(s => `
+        <button class="seed-btn ${s.id === selectedSeedId ? "active" : ""}" onclick="selectSeed(${s.id})">
+          ${s.name}<br><span style="font-size:11px;color:var(--muted)">Beli ${s.cost}c • Panen +${s.reward}c (${s.growSec}s)</span>
+        </button>
+      `).join("");
+    }
+
+    function interactPlot(index) {
+      const plot = state.plots[index];
+      const now = Date.now();
+
+      if (!plot.crop) {
+        const seed = SEEDS.find(s => s.id === selectedSeedId) || SEEDS[0];
+        const discountedCost = Math.max(1, Math.round(seed.cost * 0.88)); // Hari Hemat Toko -12%
+        if (state.energy < 2) {
+          setLog("⚡ Energi kurang dari 2! Isi energi dulu atau tunggu.");
+          return;
+        }
+        if (state.coins < discountedCost) {
+          setLog(`💰 Koin kurang! Butuh ${discountedCost}c untuk ${seed.name}.`);
+          return;
+        }
+        state.coins -= discountedCost;
+        state.energy -= 2;
+        plot.crop = {
+          seedId: seed.id,
+          name: seed.name,
+          reward: seed.reward,
+          plantedAt: now,
+          readyAt: now + seed.growSec * 1000
+        };
+        saveState();
+        setLog(`🌱 Menanam ${seed.name} di petak #${index + 1} (-${discountedCost}c, -2⚡).`);
+        renderAll();
+        return;
+      }
+
+      if (now >= plot.crop.readyAt) {
+        if (state.bagUsed >= state.bagMax) {
+          setLog("📦 Gudang penuh! Kosongkan dulu atau ekspor/reset.");
+          return;
+        }
+        // Peluang panen ganda saat Panen Raya
+        const isDouble = Math.random() < 0.35;
+        const gainedCoins = isDouble ? plot.crop.reward * 2 : plot.crop.reward;
+        state.coins += gainedCoins;
+        state.bagUsed = Math.min(state.bagMax, state.bagUsed + 1);
+        const harvestedName = plot.crop.name;
+        plot.crop = null;
+        saveState();
+        setLog(`🌾 Panen ${harvestedName} di petak #${index + 1}: +${gainedCoins}c${isDouble ? " (PANEN GANDA!)" : ""}!`);
+        renderAll();
+      } else {
+        const sisa = Math.ceil((plot.crop.readyAt - now) / 1000);
+        setLog(`⏳ ${plot.crop.name} di petak #${index + 1} siap panen dalam ${sisa} detik.`);
+      }
+    }
+
+    function claimDailyMission() {
+      const today = new Date().toISOString().slice(0, 10);
+      if (state.lastMissionDay === today) {
+        setLog("✅ Misi harian hari ini sudah diklaim (+3g).");
+        return;
+      }
+      state.lastMissionDay = today;
+      state.gold += 3;
+      saveState();
+      setLog("🎯 Misi harian selesai! Dapat +3g.");
+      renderAll();
+    }
+
+    function refillEnergy() {
+      if (state.energy >= state.maxEnergy) {
+        setLog("⚡ Energi sudah penuh.");
+        return;
+      }
+      if (state.coins < 15) {
+        setLog("💰 Butuh 15c untuk isi energi.");
+        return;
+      }
+      state.coins -= 15;
+      state.energy = Math.min(state.maxEnergy, state.energy + 10);
+      saveState();
+      setLog("⚡ Energi bertambah +10 (-15c).");
+      renderAll();
+    }
+
+    function exportSaveCode() {
+      const jsonStr = JSON.stringify(state);
+      const code = btoa(unescape(encodeURIComponent(jsonStr)));
+      document.getElementById("saveBox").value = code;
+      setLog("📤 Kode save berhasil dibuat! Salin dan kirim ke bot WA untuk sinkronisasi.");
+    }
+
+    function importSaveCode() {
+      const rawCode = document.getElementById("saveBox").value.trim();
+      if (!rawCode) {
+        setLog("⚠️ Tempelkan kode save terlebih dahulu.");
+        return;
+      }
+      try {
+        const jsonStr = decodeURIComponent(escape(atob(rawCode)));
+        const parsed = JSON.parse(jsonStr);
+        if (!parsed || typeof parsed !== "object") throw new Error("Format tidak valid");
+        state = {
+          ...defaultState(),
+          ...parsed,
+          coins: Math.max(0, Number(parsed.coins) || 0),
+          gold: Math.max(0, Number(parsed.gold) || 0),
+          level: Math.max(1, Number(parsed.level) || 1),
+          energy: Math.max(0, Math.min(Number(parsed.maxEnergy) || 30, Number(parsed.energy) || 0)),
+          plots: Array.isArray(parsed.plots) && parsed.plots.length === 6 ? parsed.plots : defaultState().plots
+        };
+        saveState();
+        setLog("📥 Kode save berhasil diimpor ke kebun web!");
+        renderAll();
+      } catch {
+        setLog("❌ Kode save tidak valid atau rusak.");
+      }
+    }
+
+    function resetDemo() {
+      state = defaultState();
+      saveState();
+      setLog("🔄 Data kebun web direset ke kondisi awal.");
+      renderAll();
+    }
+
+    function renderPlots() {
+      const grid = document.getElementById("plotsGrid");
+      const now = Date.now();
+      grid.innerHTML = state.plots.map((p, idx) => {
+        if (!p.crop) {
+          return `
+            <div class="plot" onclick="interactPlot(${idx})">
+              <div class="plot-title">Petak #${idx + 1}</div>
+              <div class="plot-sub">Kosong • Klik untuk nanem</div>
+            </div>
+          `;
+        }
+        const sisa = Math.max(0, Math.ceil((p.crop.readyAt - now) / 1000));
+        const isReady = sisa === 0;
+        return `
+          <div class="plot ${isReady ? "ready" : ""}" onclick="interactPlot(${idx})">
+            <div class="plot-title">${isReady ? "✨ Siap Panen!" : "🌿 Tumbuh"}</div>
+            <div class="plot-sub">${p.crop.name}<br>${isReady ? "Klik untuk panen" : `Sisa ${sisa}d`}</div>
+          </div>
         `;
+      }).join("");
+    }
 
-        document.getElementById("raw-json").textContent = JSON.stringify(data, null, 2);
-      })
-      .catch((err) => {
-        document.getElementById("status-badge").textContent = "Gagal Memuat";
-        document.getElementById("raw-json").textContent = err.message;
-      });
+    function renderStats() {
+      document.getElementById("playerSubtitle").textContent =
+        `${state.name} (${state.title}) • Lv.${state.level} • ${state.city} • ${state.season}`;
+      document.getElementById("statMoney").textContent = `${state.coins}c • ${state.gold}g`;
+      document.getElementById("statLevel").textContent = `Lv. ${state.level}`;
+      document.getElementById("statEnergy").textContent = `${state.energy}/${state.maxEnergy} ⚡`;
+      document.getElementById("statBag").textContent = `${state.bagUsed}/${state.bagMax} 📦`;
+    }
+
+    function renderAll() {
+      renderSeeds();
+      renderPlots();
+      renderStats();
+    }
+
+    async function loadBotData() {
+      try {
+        const res = await fetch("./web-data.json?t=" + Date.now());
+        const data = await res.json();
+        document.getElementById("jsonView").textContent = JSON.stringify(data, null, 2);
+        const badge = document.getElementById("botStatusBadge");
+        if (data.botOnline) {
+          badge.textContent = "● Bot Aktif";
+        } else {
+          badge.textContent = "○ Bot Offline";
+        }
+        if (data.updatedAt) {
+          document.getElementById("syncTime").textContent = "Update: " + data.updatedAt;
+        }
+      } catch (err) {
+        document.getElementById("jsonView").textContent = "Gagal memuat web-data.json: " + err.message;
+      }
+    }
+
+    renderAll();
+    setInterval(renderPlots, 1000);
+    loadBotData();
+    setInterval(loadBotData, 60000);
   </script>
 </body>
 </html>
