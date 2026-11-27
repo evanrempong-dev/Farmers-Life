@@ -1,19 +1,54 @@
 {
   "botName": "Farmers Life",
   "botOnline": true,
-  "updatedAt": "2026-11-27T10:58:32.673Z",
+  "updatedAt": "2026-11-27T11:03:05.980Z",
   "economy": {
     "dailyMissionGold": 3,
     "achievementGold": 5,
     "currencySymbol": "c",
     "goldSymbol": "g"
   },
+  "totalPlayers": 38,
   "featuredPlayers": [
     {
-      "name": "Pemain 1",
-      "level": 5,
-      "coins": 1200,
-      "gold": 18
+      "name": "Ihsan",
+      "level": 14374,
+      "townLevel": 1,
+      "prestigeStars": 42,
+      "coins": 161975,
+      "gold": 255
+    },
+    {
+      "name": "Rangga Eka Zunisstar",
+      "level": 2805,
+      "townLevel": 1,
+      "prestigeStars": 10,
+      "coins": 10847,
+      "gold": 70
+    },
+    {
+      "name": "Light Yagami",
+      "level": 1982,
+      "townLevel": 1,
+      "prestigeStars": 2,
+      "coins": 6976,
+      "gold": 59
+    },
+    {
+      "name": "Riojavak800i",
+      "level": 10282,
+      "townLevel": 1,
+      "prestigeStars": 24,
+      "coins": 44014,
+      "gold": 58
+    },
+    {
+      "name": "Khristopher Evan",
+      "level": 54,
+      "townLevel": 1,
+      "prestigeStars": 0,
+      "coins": 1157,
+      "gold": 45
     }
   ]
 }
