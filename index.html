@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Farmers Life — Board Status</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #141915;
+      color: #f3f5f2;
+      margin: 0;
+      padding: 24px;
+    }
+    .card {
+      max-width: 680px;
+      margin: 0 auto;
+      background: #1f2821;
+      border: 1px solid #2f3d32;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #24472d;
+      color: #8ef0a7;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    pre {
+      background: #0f1310;
+      padding: 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="badge" id="status-badge">Memuat...</span>
+    <h1>Farmers Life</h1>
+    <p id="updated-text">Menunggu data sinkronisasi...</p>
+    <h3>Ringkasan Ekonomi</h3>
+    <ul id="economy-list"></ul>
+    <h3>Data JSON</h3>
+    <pre id="raw-json">Memuat...</pre>
+  </div>
+
+  <script>
+    fetch("./web-data.json?t=" + Date.now())
+      .then((res) => {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then((data) => {
+        const badge = document.getElementById("status-badge");
+        badge.textContent = data.botOnline ? "Bot Aktif" : "Bot Offline";
+        document.getElementById("updated-text").textContent =
+          "Update terakhir: " + (data.updatedAt || "-");
+
+        const eco = data.economy || {};
+        document.getElementById("economy-list").innerHTML = `
+          <li>Misi Harian: +${eco.dailyMissionGold ?? 3}${eco.goldSymbol ?? "g"}</li>
+          <li>Pencapaian: +${eco.achievementGold ?? 5}${eco.goldSymbol ?? "g"}</li>
+          <li>Mata Uang: Coins (${eco.currencySymbol ?? "c"}) & Gold (${eco.goldSymbol ?? "g"})</li>
+        `;
+
+        document.getElementById("raw-json").textContent = JSON.stringify(data, null, 2);
+      })
+      .catch((err) => {
+        document.getElementById("status-badge").textContent = "Gagal Memuat";
+        document.getElementById("raw-json").textContent = err.message;
+      });
+  </script>
+</body>
+</html>
