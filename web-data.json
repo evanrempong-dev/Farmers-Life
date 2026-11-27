@@ -1,14 +1,11 @@
 {
   "botName": "Farmers Life",
   "botOnline": true,
-  "updatedAt": "2026-11-27T10:37:00.000Z",
+  "updatedAt": "2026-11-27T10:51:37.181Z",
   "economy": {
     "dailyMissionGold": 3,
     "achievementGold": 5,
     "currencySymbol": "c",
     "goldSymbol": "g"
-  },
-  "featuredPlayers": [
-    { "name": "Pemain 1", "level": 5, "coins": 1200, "gold": 18 }
-  ]
+  }
 }
