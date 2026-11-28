@@ -1,7 +1,7 @@
 {
   "botName": "Farmers Life",
   "botOnline": true,
-  "updatedAt": "2026-11-28T00:05:18.921Z",
+  "updatedAt": "2026-11-28T00:10:18.951Z",
   "economy": {
     "dailyMissionGold": 3,
     "achievementGold": 5,
@@ -20,11 +20,11 @@
     },
     {
       "name": "Rangga Eka Zunisstar",
-      "level": 2808,
+      "level": 2828,
       "townLevel": 1,
       "prestigeStars": 11,
-      "coins": 2286,
-      "gold": 70
+      "coins": 5090,
+      "gold": 73
     },
     {
       "name": "Light Yagami",
